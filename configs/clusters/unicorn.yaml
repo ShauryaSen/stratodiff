@@ -9,3 +9,6 @@ gpus: 1
 cpus: 8
 mem_gb: 64
 hours: 24
+setup:  # batch jobs get no login shell, so uv is not on PATH by default
+  - export PATH=$HOME/.local/bin:/usr/local/slurm/current/bin:$PATH
+  - cd $HOME/stratodiff
