@@ -4,7 +4,8 @@ A diffusion generator of global stratospheric wind for balloon navigation: rando
 native ERA5 levels (13.7-31.3 km), about 25 km and hourly, at any time and place.
 
 **Status (2026-11-03):** specified and scaffolded. Nothing is trained, so no performance is claimed.
-What it will be and in what order: [SPEC.md](SPEC.md). Why each choice: [DECISIONS.md](DECISIONS.md).
+What it will be: [SPEC.md](SPEC.md). Step by step: [ROADMAP.md](ROADMAP.md). Why each choice:
+[DECISIONS.md](DECISIONS.md).
 
 ## Layout
 
