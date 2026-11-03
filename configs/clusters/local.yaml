@@ -1,0 +1,4 @@
+# This machine, no Slurm. Small tests only.
+name: local
+data_root: data
+runs_root: runs

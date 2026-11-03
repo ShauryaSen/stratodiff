@@ -1,0 +1,11 @@
+# Sarah Dean's group nodes. Data on dean-compute-02's local scratch (DECISIONS D9), so jobs are pinned there.
+name: unicorn
+data_root: /scratch/sps252/stratodiff
+runs_root: /home/sps252/stratodiff-runs
+partition: dean
+account: dean
+nodelist: dean-compute-02
+gpus: 1
+cpus: 8
+mem_gb: 64
+hours: 24

@@ -1,0 +1,5 @@
+# M1: one month into the nside 256 store on dean-compute-02's scratch, to build and check the pipeline.
+name: pilot-month
+data:
+  start: "2020-01-01T00"
+  end: "2020-01-31T23"

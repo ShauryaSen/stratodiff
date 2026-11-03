@@ -1,0 +1,8 @@
+# Stage 2, the fine residual. Patch size and padding join the config when M5 builds the stage.
+name: stage2
+model:
+  stage: 2
+  nside: 256
+  frames: 13
+  frame_hours: 1
+  sigma_max: 200.0  # September's Stage 2 value, to be swept

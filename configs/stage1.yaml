@@ -1,0 +1,7 @@
+# Stage 1, the global sketch. base_channels and sigma_max are September's values until the M3 sweep sets them.
+name: stage1
+model:
+  stage: 1
+  nside: 64
+  frames: 12
+  frame_hours: 6
