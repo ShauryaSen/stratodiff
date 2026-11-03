@@ -13,16 +13,16 @@ out now because Phase 6 waits on it.
 
 - [x] Scaffold pushed: spec, decisions, working rules, config, run log, cluster jobs, spectral reader (M0)
 - [ ] Repo housekeeping
-  - [ ] Rename the default branch `scaffold` to `main`
+  - [x] Rename the default branch `scaffold` to `main`
   - [ ] Decide: public or private until v1. *Recommend private until Sarah has seen it.*
-  - [ ] GitHub Actions running `uv run pytest -q` on every push
-- [ ] Unicorn ready
-  - [ ] Clone to `~/stratodiff` on Unicorn; `uv sync --extra data` on a `dean-compute-02` job
-  - [ ] `df -h /scratch` on `dean-compute-02`; make `/scratch/sps252/stratodiff`
-  - [ ] Print the ingest job: `uv run stratodiff submit --cluster unicorn ingest configs/pilot_month.yaml`; check partition and account are accepted
-- [ ] Measure ARCO download speed from `dean-compute-02` (one hour of coefficients plus Z chunks, timed)
+  - [x] GitHub Actions running `uv run pytest -q` on every push
+- [x] Unicorn ready (2026-11-03)
+  - [x] Clone to `~/stratodiff` on Unicorn; `uv sync --extra data` on a `dean-compute-02` job; 29 tests pass there
+  - [x] `df -h /scratch` on `dean-compute-02`; make `/scratch/sps252/stratodiff`. MEASURED: 3.0 TB free of 6.8 TB; `/scratch/sps252` already holds 711 GB of older data
+  - [x] Print the ingest job and check it with `sbatch --test-only`: accepted on `dean`/`dean`, `dean-compute-02`. The GPU train job would preempt other users' jobs on that partition
+- [x] Measure ARCO download speed from `dean-compute-02`. MEASURED once, 2020-01-15T00: coefficients for one hour 188 MB in 6.3 s (8 parallel, 30 MB/s); Z grids 104 MB in 1.2 s. About 7.5 s and 290 MB per hour, so all 412,000 hours are about 36 days and 120 TB at this rate (*estimate*)
   - The whole archive is about 81 TB of coefficients plus the Z grids (*estimate*), so this number sets how long full ingest takes
-- [ ] Storage request out: email Sarah and CUGeoData asking for about 110 TB of shared storage, readable from every cluster, with the arithmetic
+- [ ] Storage request out (draft ready, not sent): email Sarah and CUGeoData asking for about 110 TB of shared storage, readable from every cluster, with the arithmetic
 
 **Done when:** tests pass in CI, a printed Unicorn job looks right, and the download speed is written down.
 
@@ -105,7 +105,7 @@ Port from `balloon-env-dev/src/eval/windeval/hpx/` (`net.py`, `train_coarse.py`,
 
 ## Phase 5. Stage 2 on the years scratch can hold (M5)
 
-- [ ] Ingest full-resolution years to scratch: 4 TB holds about 1.8 years at float16 (*estimate*)
+- [ ] Ingest full-resolution years to scratch. Free space is 3.0 TB (MEASURED 2026-11-03), shared with the pilot month and the 2.2 TB coarse set, so about 0.6 TB is left unless the 711 GB of older data is cleared or storage arrives
   - Decide: which years. *Recommend 2016-2017 and the 2019 validation year: recent, and inside the training split.*
 - [ ] **Code:** port the September fine model; residual patches (64 px, 32 px padding), 13 hourly frames, Stage 1 frames lifted as conditioning, exact block-mean projection
 - [ ] **Hypothesis written, then train**
