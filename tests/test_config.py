@@ -45,3 +45,20 @@ def test_round_trip_through_yaml(tmp_path):
     f = tmp_path / "c.yaml"
     f.write_text(yaml.safe_dump(to_dict(RunConfig())))
     assert load(f) == RunConfig()
+
+
+def test_frame_sizes_match_the_budget_arithmetic():
+    from stratodiff.config import DataConfig, frame_bytes
+
+    assert frame_bytes(256, DataConfig()) == 12 * 256**2 * 160 * 2  # ~252 MB, the fine frame
+    assert frame_bytes(64, DataConfig()) == 12 * 64**2 * 160 * 2  # ~16 MB, the coarse frame
+
+
+def test_buffers_over_the_disk_budget_are_refused(tmp_path):
+    from stratodiff.config import check_budget
+
+    f = tmp_path / "c.yaml"
+    f.write_text("buffers:\n  coarse_tb: 0.7\n  fine_tb: 0.7\n")
+    with pytest.raises(ValueError, match="allows 1.0 TB"):
+        check_budget(load(f), load_cluster("unicorn", CONFIGS / "clusters"))
+    check_budget(RunConfig(), load_cluster("unicorn", CONFIGS / "clusters"))

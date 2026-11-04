@@ -21,6 +21,19 @@ class DataConfig:
 
 
 @dataclass(frozen=True)
+class BufferConfig:
+    """The rotating buffers (D10, D11): random stretches of the training years, replaced as training goes,
+    so no full copy of the archive is ever on disk. A bigger budget means bigger buffers, nothing else."""
+
+    coarse_tb: float = 0.4  # coarse frames, nside 64, 6-hourly
+    fine_tb: float = 0.4  # fine frames, nside 256, hourly
+    coarse_stretch_days: int = 10  # length of one random stretch; at least one 12 x 6 h block
+    fine_stretch_hours: int = 24  # at least one 13-hour block
+    first_year: int = 1979  # training years only; validation and evaluation never enter (D2)
+    last_year: int = 2018
+
+
+@dataclass(frozen=True)
 class ModelConfig:
     stage: Literal[1, 2] = 1  # 1: global sketch, 2: fine residual patches
     nside: int = 64  # grid the stage generates on
@@ -54,6 +67,7 @@ class ClusterConfig:
     cpus: int = 4
     mem_gb: int = 16
     hours: int = 4  # wall-clock limit
+    disk_budget_tb: float = 1.0  # the most this project may hold on the cluster's data disk at once (D10)
     setup: tuple[str, ...] = ()  # shell lines run before the command, e.g. loading modules
 
 
@@ -61,6 +75,7 @@ class ClusterConfig:
 class RunConfig:
     name: str = "unnamed"
     data: DataConfig = field(default_factory=DataConfig)
+    buffers: BufferConfig = field(default_factory=BufferConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
     train: TrainConfig = field(default_factory=TrainConfig)
 
@@ -111,3 +126,17 @@ def to_dict(config) -> dict:
         return x
 
     return plain(asdict(config))
+
+
+def frame_bytes(nside: int, data: DataConfig) -> int:
+    """Bytes in one stored frame: every channel on a HEALPix grid of this nside."""
+    channels = len(data.variables) * (data.last_level - data.first_level + 1)
+    return 12 * nside**2 * channels * {"float16": 2, "float32": 4}[data.dtype]
+
+
+def check_budget(config: RunConfig, cluster: ClusterConfig) -> None:
+    """Refuse buffers that would not fit the cluster's disk budget, before anything is downloaded."""
+    used = config.buffers.coarse_tb + config.buffers.fine_tb
+    if used > cluster.disk_budget_tb:
+        raise ValueError(f"buffers need {used} TB but {cluster.name} allows {cluster.disk_budget_tb} TB; "
+                         "shrink buffers.coarse_tb or buffers.fine_tb")

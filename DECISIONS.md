@@ -14,10 +14,12 @@ interact with what we are testing, so it should become an ablation.
 | D4 | Wind and T from native T639 coefficients | ERA5 archives them as T639 ([ERA5 documentation](https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation), Table 12). One hour (2020-01-15 00Z, levels 50 and 65) synthesised by us against ARCO's grid: u, v RMSE 0.03-0.06 m/s, T 0.02 K, vorticity 6.7-7.0% of its spread. Gain over bilinear regridding not measured | CITED, MEASURED (one hour) | yes |
 | D5 | Add T and Z | cBottle generates U, V, T, Z ([arXiv 2505.06474v2](https://arxiv.org/html/2505.06474v2), Table 2). Z gives true height | CITED | |
 | D6 | Z from ARCO gridded geopotential, bilinear | The spectral store has no Z. Bilinear matches cBottle's regridding (NGC card) | CITED | |
-| D7 | Final model mixes batches across all years | Sequential training risks favouring recent years | ASSUMED | |
+| D7 | Training mixes years in every batch | Sequential training risks favouring recent years; the buffers draw random stretches from all training years, so mixing holds at any budget | ASSUMED | |
 | D8 | Store normalised float16 | Halves storage. Z must be normalised first (float16 max 65,504) | ASSUMED, checked at M1 | |
-| D9 | First month on `dean-compute-02` scratch | The training node, fast local disk, keeps the shared drive free; rebuildable from ARCO | ASSUMED | |
-| D10 | Ask for ~110 TB shared storage | 503 MB per hour at float32 for 47 years is 207 TB (arithmetic); float16 halves it | ASSUMED | |
+| D9 | Data on `dean-compute-02` scratch | The training node's fast local disk; keeps the shared drive free; rebuildable from ARCO. 3.0 TB free (MEASURED 2026-11-03) | ASSUMED | |
+| D10 | At most 1 TB on disk at once; no full copy of the archive | Student resources: a full float16 copy would be ~104 TB (arithmetic). Supersedes the 110 TB request (2026-11-04) | ASSUMED | |
+| D11 | Rotating buffers: ~0.4 TB coarse, ~0.4 TB fine, ~0.2 TB headroom | Download (~7.5 s and ~290 MB per hour, MEASURED once 2026-11-03) is the bottleneck, not disk; each downloaded hour feeds both buffers. Bigger budget, bigger buffers | ASSUMED | yes |
+| D12 | Build the whole system at demo scale first (MVP), then scale by config | A working end-to-end system early; improvements come from bigger buffers, networks and seeds, not new code | ASSUMED | |
 
 ## Model
 

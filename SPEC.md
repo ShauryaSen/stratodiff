@@ -1,6 +1,6 @@
 # stratodiff: specification
 
-Status 2026-11-03: specified, scaffolded, nothing trained. No result in this file is a measurement of
+Status 2026-11-04: specified, scaffolded, nothing trained. No result in this file is a measurement of
 stratodiff unless it says MEASURED.
 
 ## Goal
@@ -30,8 +30,10 @@ native vertical resolution, so that gap closes. Whether it does is checked at M4
     QBO index. No SST.
   - Unbounded time: InfiniteDiffusion tiling, noise seeded by (time, place).
   - Sampler: 18-step Heun. Network size and the noise maximum set by a small-scale sweep.
-- **Storage:** first month on `dean-compute-02:/scratch/sps252/stratodiff` (node-local, not backed up,
-  rebuildable from ARCO). Full Stage 2 data needs about 110 TB of shared storage, requested.
+- **Storage, at most 1 TB at once:** no full copy of the archive is kept. Two rotating buffers of random
+  stretches drawn from all training years, on `dean-compute-02:/scratch/sps252/stratodiff` (node-local,
+  not backed up, rebuildable from ARCO): about 0.4 TB of coarse frames and 0.4 TB of fine frames, plus
+  0.2 TB headroom. Each downloaded hour feeds both. More storage later means bigger buffers, not new code.
 - **Interface:** gridded records with u, v, T, Z and both pressure and height per level; exports the
   balloon-sim record format.
 
@@ -41,20 +43,22 @@ native vertical resolution, so that gap closes. Whether it does is checked at M4
 |---|---|---|
 | M0 | Scaffold | `uv run pytest -q` passes; `stratodiff show-config` resolves every config; a run directory records config, commit and seed |
 | M1 | Ingest one month (2020-01) to scratch | u, v, T synthesised from coefficients match ARCO's gridded fields at ARCO grid points: RMSE under 0.1 m/s for u and v and under 0.05 K for T on every level and hour (one hour measured 0.03-0.06 m/s and 0.02 K, see DECISIONS D4). Z agrees with Z rebuilt from T to a tolerance set on the first day and recorded. Float16 storage changes no field by more than 1% of its standard deviation (ASSUMED threshold) |
-| M2 | Stage 1 dataset, all years | Every hour 1979-2025 at nside 64, 6-hourly, present and finite; per-channel mean and variance by month match the nside 256 source |
-| M3 | Stage 1 small-scale sweep | Network size and noise maximum chosen from 3 seeds per setting, with intervals, hypothesis written first |
-| M4 | Stage 1 model of record | On 2019-2020: seasonal cycle and QBO phase follow their conditioning; zonal-mean wind and spectra within ERA5's year-to-year range (thresholds written before the run) |
-| M5 | Stage 2 on the years stored so far | Block means equal Stage 1 to float tolerance; spectra to 25 km within ERA5's range |
+| M2 | Rotating buffers and the QBO series | Both buffers stay under budget while refilling; every buffer mixes years from across 1979-2018; a restarted refill resumes; the QBO index over 1979-2025 shows the ~28-month cycle |
+| M3 | Stage 1 code | A short run trains from the coarse buffer, resumes after a kill, and records config, commit and seed |
+| M4 | Stage 1 checks | On 2019-2020: seasonal cycle and QBO phase follow their conditioning; zonal-mean wind and spectra within ERA5's year-to-year range (thresholds written before the run) |
+| M5 | Stage 2 from the fine buffer | Block means equal Stage 1 to float tolerance; spectra to 25 km within ERA5's range |
 | M6 | Time tiling | Same seed and time give identical output in any query order; no detectable jump at block seams |
 | M7 | Export | balloon-sim loads an exported record and flies it; pressure and height per level present |
-| M8 | Full scale | Needs the shared storage; Stage 2 retrained on all training years with mixed batches |
+| MVP | The whole system at demo scale | M1-M7 pass with small models and 1 seed; a generated record flies in balloon-sim; shown to Sarah |
+| M8 | Scale up | As storage and GPUs grow: bigger buffers, wider networks, longer training, the M3 sweep with 3 seeds per setting, a model of record with 3 seeds; M4-M5 checks repeated with intervals |
 
 Research milestone after M4: tiling vs autoregression in time, on the same masked-frame weights
 (hypothesis and predictions on the model card).
 
 ## Compute
 
-Unicorn `dean-compute-02` (4x RTX 6000 Ada, 48 GB) now; CUGeoData later. One command each:
+Unicorn `dean-compute-02` (4x RTX 6000 Ada, 48 GB), one GPU at a time for now: the node is about 96% busy
+(MEASURED, 2026-11-03), and lab members use around two GPUs continuously. CUGeoData later. One command each:
 `uv run stratodiff submit --cluster unicorn train configs/stage1.yaml` and the same with `eval`. A cluster
 is a YAML profile; no code changes to move clusters.
 
